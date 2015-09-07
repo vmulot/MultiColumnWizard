@@ -403,6 +403,7 @@ class MultiColumnWizard extends Widget implements uploadable
 
         $arrUnique = array();
         $arrDatepicker = array();
+        $arrColorpicker = array();
         $arrTinyMCE = array();
         $arrHeaderItems = array();
 
@@ -419,7 +420,10 @@ class MultiColumnWizard extends Widget implements uploadable
             {
                 $arrDatepicker[] = $strKey;
             }
-
+            if ($arrField['eval']['colorpicker'])
+            {
+                $arrColorpicker[] = $strKey;
+            }
             // Store tiny mce fields
             if ($arrField['eval']['rte'] && strncmp($arrField['eval']['rte'], 'tiny', 4) === 0)
             {
@@ -512,8 +516,25 @@ class MultiColumnWizard extends Widget implements uploadable
                 else
                 {
                     $datepicker = '';
+                    $colorpicker = '';
                     $tinyMce    = '';
-
+                    
+                    if($arrField['eval']['colorpicker'])
+                    {
+                        $colorpicker .= ' ' . \Image::getHtml('pickcolor.gif', $GLOBALS['TL_LANG']['MSC']['colorpicker'], 'style="vertical-align:top;cursor:pointer" title="'.specialchars($GLOBALS['TL_LANG']['MSC']['colorpicker']).'" id="moo_' . $objWidget->id . '"') . '
+                          <script>
+                            window.addEvent("domready", function() {
+                              new MooRainbow("moo_' . $objWidget->id . '", {
+                                id: "ctrl_' . $objWidget->id. '",
+                                startColor: ((cl = $("ctrl_' . $objWidget->id . '").value.hexToRgb(true)) ? cl : [255, 0, 0]),
+                                imgPath: "assets/mootools/colorpicker/' . $GLOBALS['TL_ASSETS']['COLORPICKER'] . '/images/",
+                                onComplete: function(color) {
+                                  $("ctrl_' . $objWidget->id . '").value = color.hex.replace("#", "");
+                                }
+                              });
+                            });
+                          </script>';
+                    }
                     // Datepicker
                     if ($arrField['eval']['datepicker'])
                     {
@@ -596,7 +617,7 @@ class MultiColumnWizard extends Widget implements uploadable
                         $objWidget->wizard = $wizard;
                     }
 
-                    $strWidget = $objWidget->parse() . $datepicker . $tinyMce;
+                    $strWidget = $objWidget->parse() . $datepicker . $tinyMce . $colorpicker;
                 }
 
                 // Build array of items
@@ -624,17 +645,17 @@ class MultiColumnWizard extends Widget implements uploadable
 
         if ($this->blnTableless)
         {
-            $strOutput = $this->generateDiv($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader);
+            $strOutput = $this->generateDiv($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader, $arrColorpicker);
         }
         else
         {
             if ($this->columnTemplate != '')
             {
-                $strOutput = $this->generateTemplateOutput($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader);
+                $strOutput = $this->generateTemplateOutput($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader,$arrColorpicker);
             }
             else
             {
-                $strOutput = $this->generateTable($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader);
+                $strOutput = $this->generateTable($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader,$arrColorpicker);
             }
         }
 
@@ -1039,7 +1060,7 @@ class MultiColumnWizard extends Widget implements uploadable
      * @param array
      * @return string
      */
-    protected function generateTable($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader = array())
+    protected function generateTable($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader = array(),$arrColorPicker)
     {
 
         // generate header fields
@@ -1065,7 +1086,7 @@ class MultiColumnWizard extends Widget implements uploadable
 
 
         $return = '
-<table cellspacing="0" ' . (($this->style) ? ('style="' . $this->style . '"') : ('')) . 'rel="maxCount[' . ($this->maxCount ? $this->maxCount : '0') . '] minCount[' . ($this->minCount ? $this->minCount : '0') . '] unique[' . implode(',', $arrUnique) . '] datepicker[' . implode(',', $arrDatepicker) . ']" cellpadding="0" id="ctrl_' . $this->strId . '" class="tl_modulewizard multicolumnwizard" summary="MultiColumnWizard">';
+<table cellspacing="0" ' . (($this->style) ? ('style="' . $this->style . '"') : ('')) . 'rel="maxCount[' . ($this->maxCount ? $this->maxCount : '0') . '] minCount[' . ($this->minCount ? $this->minCount : '0') . '] unique[' . implode(',', $arrUnique) . '] datepicker[' . implode(',', $arrDatepicker) . '] colorpicker['.implode(',',$arrColorpicker).']" cellpadding="0" id="ctrl_' . $this->strId . '" class="tl_modulewizard multicolumnwizard" summary="MultiColumnWizard">';
 
         if ($this->columnTemplate == '')
         {
@@ -1117,7 +1138,7 @@ class MultiColumnWizard extends Widget implements uploadable
         return $return;
     }
 
-    protected function generateTemplateOutput($arrUnique, $arrDatepicker, $strHidden, $arrItems)
+    protected function generateTemplateOutput($arrUnique, $arrDatepicker, $strHidden, $arrItems,$arrColorpicker)
     {
         $objTemplate        = new BackendTemplate($this->columnTemplate);
         $objTemplate->items = $arrItems;
@@ -1140,7 +1161,7 @@ class MultiColumnWizard extends Widget implements uploadable
      * @param array
      * @return string
      */
-    protected function generateDiv($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader = array())
+    protected function generateDiv($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader = array(),$arrColorpicker)
     {
         // generate header fields
         foreach ($this->columnFields as $strKey => $arrField)
