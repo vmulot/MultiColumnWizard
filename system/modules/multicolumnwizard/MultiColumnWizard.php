@@ -1060,7 +1060,7 @@ class MultiColumnWizard extends Widget implements uploadable
      * @param array
      * @return string
      */
-    protected function generateTable($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader = array(),$arrColorPicker)
+    protected function generateTable($arrUnique, $arrDatepicker, $strHidden, $arrItems, $arrHiddenHeader = array(),$arrColorpicker)
     {
 
         // generate header fields
